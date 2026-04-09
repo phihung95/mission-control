@@ -1,8 +1,19 @@
+// Team (sub-unit within a board group)
+export interface Team {
+  id: string;
+  name: string; // e.g. "Coder Team"
+  leadAgentId: string; // which agent is the lead
+  agents: string[]; // agent IDs
+  boards: string[]; // board IDs
+  color: string;
+}
+
 // Organization
 export interface Organization {
   id: string;
   name: string;
   slug: string;
+  ownerName: string;
   boardGroups: BoardGroup[];
   members: Member[];
   createdAt: string;
@@ -14,7 +25,9 @@ export interface BoardGroup {
   name: string;
   identifier: string; // e.g. "ENG", "MKT"
   color: string;
+  teams: Team[];
   boards: Board[];
+  members: Member[];
 }
 
 // Board
@@ -61,7 +74,7 @@ export interface Agent {
   sessionKey?: string;
 }
 
-// Member
+// Member (user in the organization)
 export interface Member {
   id: string;
   name: string;

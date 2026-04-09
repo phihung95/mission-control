@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { Organization, Task, Agent, Member, BoardGroup, Board, FeedEvent, ChatMessage } from "./types";
-import { seedOrganization, agents as seedAgents, members as seedMembers, feedEvents } from "./data";
+import { seedOrganization, seedAgents, seedMembers, feedEvents } from "./data";
 
 interface AppState {
   organization: Organization;
@@ -194,8 +194,21 @@ export const useStore = create<AppState>((set, get) => ({
     try {
       const res = await fetch("/api/agents");
       const data = await res.json();
-      if (data.agents && data.agents.length > 0) {
-        set((state) => ({
+      // If API returns nothing, show Jarvis as the active agent
+      if (data.agents && data.agents.length === 0) {
+        set(() => ({
+          agents: [{
+            id: "jarvis",
+            name: "Jarvis",
+            model: "gemma4:e4b",
+            provider: "ollama",
+            status: "active",
+            role: "coder",
+            sessionKey: "agent:main:main",
+          }],
+        }));
+      } else if (data.agents && data.agents.length > 0) {
+        set(() => ({
           agents: data.agents,
         }));
       }

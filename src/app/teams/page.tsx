@@ -1,195 +1,151 @@
 "use client";
 
 import { useState } from "react";
-import { useStore } from "@/lib/store";
 import { TopBar } from "@/components/layout/TopBar";
-import { Avatar } from "@/components/shared/Avatar";
-import { StatusBadge } from "@/components/shared/StatusBadge";
-import { ChevronDown, ChevronRight, Users, Bot, Kanban } from "lucide-react";
+import { useStore } from "@/lib/store";
+import { Team } from "@/lib/types";
+import { Bot, ChevronDown, ChevronRight, Users, Plus, Settings } from "lucide-react";
 
-export default function TeamsPage() {
-  const { organization, agents } = useStore();
-  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+function AgentNode({ agentId }: { agentId: string }) {
+  const agent = useStore((s) => s.agents.find((a) => a.id === agentId));
 
-  const toggleGroup = (groupId: string) => {
-    setExpandedGroup(expandedGroup === groupId ? null : groupId);
-  };
+  if (!agent) return null;
 
   return (
-    <div className="flex flex-col h-full">
-      <TopBar 
-        title="Teams" 
-        subtitle={`${organization.boardGroups.length} teams`}
+    <div className="flex items-center gap-2 px-3 py-2 bg-[#17171A] border border-[#1A1A1F] rounded-lg">
+      <div className="w-7 h-7 rounded-full bg-indigo-500/20 flex items-center justify-center">
+        <Bot className="w-4 h-4 text-indigo-400" />
+      </div>
+      <div className="min-w-0">
+        <div className="text-xs font-medium text-white truncate">{agent.name}</div>
+        <div className="text-[10px] text-[#5C5C60] truncate">{agent.model}</div>
+      </div>
+      <div
+        className={`ml-auto w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+          agent.status === "active"
+            ? "bg-emerald-400"
+            : agent.status === "busy"
+            ? "bg-amber-400"
+            : "bg-[#5C5C60]"
+        }`}
       />
-      
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="space-y-4">
-          {organization.boardGroups.map((group) => {
-            const isExpanded = expandedGroup === group.id;
-            const groupAgents = agents.filter((a) => a.teamId === group.id);
-            
-            // Count members who have tasks in this group's boards
-            const memberIdsWithTasks = new Set<string>();
-            group.boards.forEach((board) => {
-              board.columns.forEach((col) => {
-                col.tasks.forEach((task) => {
-                  if (task.assigneeId && task.assigneeId.startsWith('member-')) {
-                    memberIdsWithTasks.add(task.assigneeId);
-                  }
-                });
-              });
-            });
-            
-            // Count total tasks
-            let taskCount = 0;
-            group.boards.forEach((board) => {
-              board.columns.forEach((col) => {
-                taskCount += col.tasks.length;
-              });
-            });
+    </div>
+  );
+}
 
-            return (
-              <div 
-                key={group.id}
-                className="bg-[#17171A] border border-[#2A2A30] rounded-xl overflow-hidden"
-              >
-                {/* Group Header */}
-                <button
-                  onClick={() => toggleGroup(group.id)}
-                  className="w-full flex items-center gap-4 p-5 hover:bg-[#1A1A1F] transition-colors"
-                >
-                  <div className="text-[#5C5C60]">
-                    {isExpanded ? (
-                      <ChevronDown className="w-5 h-5" />
-                    ) : (
-                      <ChevronRight className="w-5 h-5" />
-                    )}
-                  </div>
-                  
-                  <div 
-                    className="w-10 h-10 rounded-lg flex items-center justify-center"
-                    style={{ backgroundColor: `${group.color}20` }}
-                  >
-                    <Users className="w-5 h-5" style={{ color: group.color }} />
-                  </div>
+function TeamNode({ team }: { team: Team }) {
+  const [expanded, setExpanded] = useState(true);
+  const store = useStore();
+  const agents = store.agents.filter((a) => team.agents.includes(a.id));
 
-                  <div className="flex-1 text-left">
-                    <h3 className="font-semibold text-white">{group.name}</h3>
-                    <span 
-                      className="text-xs px-1.5 py-0.5 rounded font-medium"
-                      style={{ backgroundColor: `${group.color}20`, color: group.color }}
-                    >
-                      {group.identifier}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-6 text-sm">
-                    <div className="text-center">
-                      <div className="text-white font-medium">{memberIdsWithTasks.size || organization.members.length}</div>
-                      <div className="text-[#5C5C60] text-xs">Members</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-white font-medium">{groupAgents.length}</div>
-                      <div className="text-[#5C5C60] text-xs">Agents</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-white font-medium">{group.boards.length}</div>
-                      <div className="text-[#5C5C60] text-xs">Boards</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-white font-medium">{taskCount}</div>
-                      <div className="text-[#5C5C60] text-xs">Tasks</div>
-                    </div>
-                  </div>
-                </button>
-
-                {/* Expanded Content */}
-                {isExpanded && (
-                  <div className="border-t border-[#2A2A30] p-5 bg-[#0D0D0F]">
-                    <div className="grid grid-cols-3 gap-6">
-                      {/* Members */}
-                      <div>
-                        <h4 className="flex items-center gap-2 text-sm font-medium text-[#8A8A8E] mb-3">
-                          <Users className="w-4 h-4" />
-                          Members
-                        </h4>
-                        <div className="space-y-2">
-                          {organization.members.map((member) => (
-                            <div 
-                              key={member.id}
-                              className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#17171A]"
-                            >
-                              <Avatar name={member.name} avatar={member.avatar} size="sm" />
-                              <div className="flex-1 min-w-0">
-                                <div className="text-sm font-medium text-white truncate">
-                                  {member.name}
-                                </div>
-                                <div className="text-xs text-[#5C5C60] capitalize">
-                                  {member.role}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Agents */}
-                      <div>
-                        <h4 className="flex items-center gap-2 text-sm font-medium text-[#8A8A8E] mb-3">
-                          <Bot className="w-4 h-4" />
-                          Agents
-                        </h4>
-                        <div className="space-y-2">
-                          {groupAgents.length === 0 ? (
-                            <p className="text-sm text-[#5C5C60]">No agents assigned</p>
-                          ) : (
-                            groupAgents.map((agent) => (
-                              <div 
-                                key={agent.id}
-                                className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#17171A]"
-                              >
-                                <Avatar name={agent.name} size="sm" />
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-sm font-medium text-white truncate">
-                                    {agent.name}
-                                  </div>
-                                  <div className="text-xs text-[#5C5C60]">
-                                    {agent.model}
-                                  </div>
-                                </div>
-                                <StatusBadge status={agent.status} />
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Boards */}
-                      <div>
-                        <h4 className="flex items-center gap-2 text-sm font-medium text-[#8A8A8E] mb-3">
-                          <Kanban className="w-4 h-4" />
-                          Boards
-                        </h4>
-                        <div className="space-y-2">
-                          {group.boards.map((board) => (
-                            <a
-                              key={board.id}
-                              href={`/board/${board.id}`}
-                              className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#17171A] transition-colors"
-                            >
-                              <Kanban className="w-4 h-4 text-[#5C5C60]" />
-                              <span className="text-sm text-white">{board.name}</span>
-                            </a>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+  return (
+    <div className="pl-6 border-l border-[#1A1A1F] ml-4">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-2 py-2 hover:opacity-80 transition-opacity w-full text-left"
+      >
+        {expanded ? (
+          <ChevronDown className="w-4 h-4 text-[#5C5C60] flex-shrink-0" />
+        ) : (
+          <ChevronRight className="w-4 h-4 text-[#5C5C60] flex-shrink-0" />
+        )}
+        <div
+          className="w-2 h-2 rounded-full flex-shrink-0"
+          style={{ backgroundColor: team.color }}
+        />
+        <span className="text-sm font-medium text-white">{team.name}</span>
+        <span className="text-xs text-[#5C5C60]">({agents.length})</span>
+      </button>
+      {expanded && (
+        <div className="space-y-2 pb-2">
+          {agents.map((agent) => (
+            <AgentNode key={agent.id} agentId={agent.id} />
+          ))}
         </div>
+      )}
+    </div>
+  );
+}
+
+export default function TeamsPage() {
+  const { organization } = useStore();
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
+    Object.fromEntries(organization.boardGroups.map((g) => [g.id, true]))
+  );
+
+  const toggleGroup = (id: string) =>
+    setExpandedGroups((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  return (
+    <div className="flex flex-col h-screen overflow-hidden">
+      <TopBar title="Teams" />
+      <div className="flex-1 overflow-y-auto p-6">
+        {/* Org Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
+              PN
+            </div>
+            <div>
+              <div className="text-base font-semibold text-white">{organization.ownerName}</div>
+              <div className="text-xs text-[#5C5C60]">{organization.name}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Chief of Staff */}
+        <div className="mb-6">
+          <div className="pl-6 border-l-2 border-indigo-500 ml-5">
+            <div className="flex items-center gap-3 px-4 py-3 bg-[#17171A] border border-[#1A1A1F] rounded-lg">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500/30 to-purple-500/30 flex items-center justify-center">
+                <Bot className="w-5 h-5 text-indigo-400" />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-white">Jarvis</div>
+                <div className="text-xs text-[#8A8A8E]">Chief of Staff</div>
+              </div>
+              <div className="ml-auto flex items-center gap-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <span className="text-[10px] text-[#5C5C60]">Active</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Teams by Board Group */}
+        {organization.boardGroups.map((group) => (
+          <div key={group.id} className="mb-6">
+            {/* Group header */}
+            <button
+              onClick={() => toggleGroup(group.id)}
+              className="flex items-center gap-2 mb-3 w-full text-left"
+            >
+              {expandedGroups[group.id] ? (
+                <ChevronDown className="w-4 h-4 text-[#5C5C60]" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-[#5C5C60]" />
+              )}
+              <div
+                className="w-2.5 h-2.5 rounded-full"
+                style={{ backgroundColor: group.color }}
+              />
+              <span className="text-xs font-semibold uppercase text-[#8A8A8E] tracking-wide">
+                {group.identifier}
+              </span>
+              <span className="text-sm font-medium text-white">{group.name}</span>
+              <span className="text-xs text-[#5C5C60]">· {group.teams.length} teams</span>
+            </button>
+
+            {/* Teams */}
+            {expandedGroups[group.id] && (
+              <div className="space-y-1">
+                {group.teams.map((team) => (
+                  <TeamNode key={team.id} team={team} />
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
