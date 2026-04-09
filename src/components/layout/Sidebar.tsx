@@ -10,7 +10,8 @@ import {
   Users, 
   Settings,
   Zap,
-  Store
+  Store,
+  Bell
 } from "lucide-react";
 
 const navItems = [
@@ -23,19 +24,43 @@ const navItems = [
   { href: "/settings", icon: Settings, label: "Settings" },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  onNotificationClick: () => void;
+  onSearchClick: () => void;
+}
+
+export function Sidebar({ onNotificationClick, onSearchClick }: SidebarProps) {
   const pathname = usePathname();
 
   return (
     <aside className="w-56 bg-[#17171A] border-r border-[#2A2A30] flex flex-col h-full">
       {/* Logo */}
       <div className="p-4 border-b border-[#2A2A30]">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#5E5CE6] flex items-center justify-center">
-            <Zap className="w-4 h-4 text-white" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-[#5E5CE6] flex items-center justify-center">
+              <Zap className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-semibold text-white">Mission Control</span>
           </div>
-          <span className="font-semibold text-white">Mission Control</span>
+          <button
+            onClick={onNotificationClick}
+            className="relative p-1.5 rounded-md hover:bg-[#1F1F24] text-[#8A8A8E] hover:text-white transition-colors"
+          >
+            <Bell className="w-4 h-4" />
+            {/* Notification dot */}
+            <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500" />
+          </button>
         </div>
+        
+        {/* Search trigger */}
+        <button
+          onClick={onSearchClick}
+          className="w-full mt-3 flex items-center gap-2 px-3 py-2 rounded-md bg-[#1F1F24] text-[#5C5C60] hover:text-white hover:bg-[#252529] transition-colors"
+        >
+          <span className="text-xs">Search...</span>
+          <kbd className="ml-auto px-1.5 py-0.5 rounded bg-[#252529] text-[10px]">⌘K</kbd>
+        </button>
       </div>
 
       {/* Navigation */}

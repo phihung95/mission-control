@@ -9,6 +9,15 @@ interface AppState {
   events: FeedEvent[];
   messages: Record<string, ChatMessage[]>;
   
+  // Active board for chat
+  activeBoardId: string | null;
+  setActiveBoardId: (id: string | null) => void;
+  
+  // Unread message counts per board
+  unreadCounts: Record<string, number>;
+  incrementUnread: (boardId: string) => void;
+  clearUnread: (boardId: string) => void;
+  
   // Task actions
   moveTask: (taskId: string, fromColumnId: string, toColumnId: string) => void;
   updateTask: (taskId: string, updates: Partial<Task>) => void;
@@ -46,6 +55,23 @@ export const useStore = create<AppState>((set, get) => ({
   members: seedMembers,
   events: feedEvents,
   messages: {},
+  
+  activeBoardId: null,
+  setActiveBoardId: (id) => set({ activeBoardId: id }),
+  
+  unreadCounts: {},
+  incrementUnread: (boardId) => set((state) => ({
+    unreadCounts: {
+      ...state.unreadCounts,
+      [boardId]: (state.unreadCounts[boardId] ?? 0) + 1,
+    },
+  })),
+  clearUnread: (boardId) => set((state) => ({
+    unreadCounts: {
+      ...state.unreadCounts,
+      [boardId]: 0,
+    },
+  })),
 
   moveTask: (taskId: string, fromColumnId: string, toColumnId: string) => {
     set((state) => {
@@ -193,12 +219,23 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   addMessage: (boardId: string, message: ChatMessage) => {
-    set((state) => ({
-      messages: {
-        ...state.messages,
-        [boardId]: [...(state.messages[boardId] ?? []), message],
-      },
-    }));
+    set((state) => {
+      const isFromAgent = message.senderType === "agent";
+      const isActiveBoard = state.activeBoardId === boardId;
+      
+      return {
+        messages: {
+          ...state.messages,
+          [boardId]: [...(state.messages[boardId] ?? []), message],
+        },
+        unreadCounts: {
+          ...state.unreadCounts,
+          [boardId]: isFromAgent && !isActiveBoard
+            ? (state.unreadCounts[boardId] ?? 0) + 1
+            : state.unreadCounts[boardId],
+        },
+      };
+    });
   },
 
   getTaskById: (taskId: string) => {

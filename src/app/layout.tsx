@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { GlobalUI } from "@/components/layout/GlobalUI";
 
 export const metadata: Metadata = {
   title: "Mission Control",
@@ -26,12 +26,7 @@ export default function RootLayout({
         className="bg-[#0D0D0F] text-white antialiased"
         style={{ fontFamily: "'Inter', sans-serif" }}
       >
-        <div className="flex h-screen overflow-hidden">
-          <Sidebar />
-          <main className="flex-1 flex flex-col overflow-hidden">
-            {children}
-          </main>
-        </div>
+        <GlobalUI>{children}</GlobalUI>
       </body>
     </html>
   );

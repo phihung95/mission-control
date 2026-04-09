@@ -3,23 +3,37 @@
 import { useState, useEffect, useRef } from "react";
 import { useStore } from "@/lib/store";
 import { ChatMessage } from "@/lib/types";
-import { X, Send, Bot } from "lucide-react";
+import { Send, Bot, ChevronDown, X } from "lucide-react";
 
 interface BoardChatProps {
   boardId: string;
-  onClose: () => void;
 }
 
-export function BoardChat({ boardId, onClose }: BoardChatProps) {
-  const { agents, messages, addMessage } = useStore();
+export function BoardChat({ boardId }: BoardChatProps) {
+  const { agents, messages, addMessage, activeBoardId, setActiveBoardId, clearUnread, organization } = useStore();
   const [input, setInput] = useState("");
+  const [showBoardSelector, setShowBoardSelector] = useState(false);
   const boardMessages = messages[boardId] ?? [];
   const scrollRef = useRef<HTMLDivElement>(null);
   const leadAgent = agents[0];
 
+  // Get all boards for selector
+  const allBoards = organization.boardGroups.flatMap((g) =>
+    g.boards.map((b) => ({ id: b.id, name: b.name }))
+  );
+
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [boardMessages]);
+
+  useEffect(() => {
+    if (boardId !== activeBoardId) {
+      setActiveBoardId(boardId);
+    }
+    clearUnread(boardId);
+  }, [boardId, activeBoardId, setActiveBoardId, clearUnread]);
+
+  const currentBoard = allBoards.find((b) => b.id === boardId);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -50,23 +64,47 @@ export function BoardChat({ boardId, onClose }: BoardChatProps) {
 
   return (
     <div className="w-80 bg-[#0D0D0F] border-l border-[#1A1A1F] flex flex-col h-full">
-      {/* Header */}
+      {/* Header with board selector */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[#1A1A1F]">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-indigo-500/20 flex items-center justify-center">
-            <Bot className="w-4 h-4 text-indigo-400" />
-          </div>
-          <div>
-            <div className="text-xs font-semibold text-white">{leadAgent?.name ?? "Lead Agent"}</div>
-            <div className="text-[10px] text-[#5C5C60]">{leadAgent?.model ?? "gemma4"} · {leadAgent?.status ?? "idle"}</div>
+        <div className="relative">
+          <button
+            onClick={() => setShowBoardSelector(!showBoardSelector)}
+            className="flex items-center gap-2 hover:bg-[#1F1F24] rounded-md px-2 py-1 transition-colors"
+          >
+            <div className="w-7 h-7 rounded-full bg-indigo-500/20 flex items-center justify-center">
+              <Bot className="w-4 h-4 text-indigo-400" />
+            </div>
+            <div className="text-xs font-medium text-white max-w-[140px] truncate">
+              {currentBoard?.name ?? "Board Chat"}
+            </div>
+            <ChevronDown className="w-3 h-3 text-[#5C5C60]" />
+          </button>
+
+          {/* Board selector dropdown */}
+          {showBoardSelector && (
+            <div className="absolute top-full left-0 mt-1 w-56 bg-[#17171A] border border-[#1A1A1F] rounded-lg shadow-xl z-10 py-1">
+              {allBoards.map((board) => (
+                <button
+                  key={board.id}
+                  onClick={() => {
+                    setActiveBoardId(board.id);
+                    setShowBoardSelector(false);
+                  }}
+                  className={`w-full text-left px-3 py-2 text-xs hover:bg-[#1F1F24] transition-colors ${
+                    board.id === boardId ? "text-indigo-400" : "text-white"
+                  }`}
+                >
+                  {board.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="text-[10px] text-[#5C5C60]">
+            {leadAgent?.status ?? "idle"}
           </div>
         </div>
-        <button
-          onClick={onClose}
-          className="p-1 rounded hover:bg-[#1F1F24] text-[#5C5C60] hover:text-white transition-colors"
-        >
-          <X className="w-4 h-4" />
-        </button>
       </div>
 
       {/* Messages */}
@@ -88,9 +126,15 @@ export function BoardChat({ boardId, onClose }: BoardChatProps) {
                   : "bg-[#1F1F24] text-[#C4C4C8]"
               }`}
             >
-              <div className="font-medium text-[10px] mb-1 opacity-70">{msg.senderName}</div>
+              <div className="font-medium text-[10px] mb-1 opacity-70">
+                {msg.senderName}
+              </div>
               {msg.content}
-              <div className={`text-[10px] mt-1 ${msg.senderType === "member" ? "text-indigo-200" : "text-[#5C5C60]"}`}>
+              <div
+                className={`text-[10px] mt-1 ${
+                  msg.senderType === "member" ? "text-indigo-200" : "text-[#5C5C60]"
+                }`}
+              >
                 {msg.timestamp}
               </div>
             </div>

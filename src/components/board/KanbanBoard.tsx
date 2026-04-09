@@ -6,8 +6,7 @@ import { Board, Task } from "@/lib/types";
 import { KanbanColumn } from "./KanbanColumn";
 import { useStore } from "@/lib/store";
 import { LiveFeed } from "@/components/shared/LiveFeed";
-import { BoardChat } from "./BoardChat";
-import { MessageSquare, Rss } from "lucide-react";
+import { Rss } from "lucide-react";
 
 interface KanbanBoardProps {
   board: Board;
@@ -18,7 +17,6 @@ interface KanbanBoardProps {
 export function KanbanBoard({ board, onTaskClick, onAddTask }: KanbanBoardProps) {
   const { moveTask } = useStore();
   const [showFeed, setShowFeed] = useState(false);
-  const [showChat, setShowChat] = useState(false);
 
   const handleDragEnd = (result: DropResult) => {
     const { destination, source, draggableId } = result;
@@ -47,17 +45,6 @@ export function KanbanBoard({ board, onTaskClick, onAddTask }: KanbanBoardProps)
             <Rss className="w-3.5 h-3.5" />
             Live Feed
           </button>
-          <button
-            onClick={() => setShowChat(!showChat)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-              showChat
-                ? "bg-[#5E5CE6] text-white"
-                : "bg-[#1F1F24] text-[#8A8A8E] hover:text-white"
-            }`}
-          >
-            <MessageSquare className="w-3.5 h-3.5" />
-            Chat
-          </button>
         </div>
       </div>
 
@@ -85,11 +72,6 @@ export function KanbanBoard({ board, onTaskClick, onAddTask }: KanbanBoardProps)
             </div>
           </DragDropContext>
         </div>
-
-        {/* Chat panel - right side */}
-        {showChat && (
-          <BoardChat boardId={board.id} onClose={() => setShowChat(false)} />
-        )}
       </div>
     </div>
   );
