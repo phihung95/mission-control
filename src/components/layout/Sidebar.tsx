@@ -14,8 +14,9 @@ import {
 
 const navItems = [
   { href: "/", icon: LayoutDashboard, label: "Overview" },
+  { href: "/boards", icon: Kanban, label: "Boards" },
   { href: "/tasks", icon: ListTodo, label: "Tasks" },
-  { href: "/agents", icon: Bot, label: "Agents" },
+  { href: "/agents", icon: Bot, label: "Models" },
   { href: "/teams", icon: Users, label: "Teams" },
   { href: "/settings", icon: Settings, label: "Settings" },
 ];

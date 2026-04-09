@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { Organization, Task, Agent, Member, BoardGroup } from "./types";
+import { Organization, Task, Agent, Member, BoardGroup, Board } from "./types";
 import { seedOrganization, agents as seedAgents, members as seedMembers } from "./data";
 
 interface AppState {
@@ -11,22 +11,25 @@ interface AppState {
   moveTask: (taskId: string, fromColumnId: string, toColumnId: string) => void;
   updateTask: (taskId: string, updates: Partial<Task>) => void;
   addTask: (columnId: string, task: Task) => void;
-  
+
   // Agent actions
   addAgent: (agent: Agent) => void;
   updateAgent: (agentId: string, updates: Partial<Agent>) => void;
   toggleAgentStatus: (agentId: string) => void;
-  
+
+  // Board actions
+  addBoard: (board: Board) => void;
+
   // Organization actions
   updateOrganizationName: (name: string) => void;
   addMember: (member: Member) => void;
   removeMember: (memberId: string) => void;
-  
+
   // Helpers
   getTaskById: (taskId: string) => Task | undefined;
   getMemberById: (memberId: string) => Member | undefined;
   getAgentById: (agentId: string) => Agent | undefined;
-  getBoardById: (boardId: string) => import("./types").Board | undefined;
+  getBoardById: (boardId: string) => Board | undefined;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -108,6 +111,17 @@ export const useStore = create<AppState>((set, get) => ({
         }
       }
       
+      return { organization: newOrg };
+    });
+  },
+
+  addBoard: (board: Board) => {
+    set((state) => {
+      const newOrg = JSON.parse(JSON.stringify(state.organization)) as Organization;
+      const group = newOrg.boardGroups.find((g) => g.id === board.groupId);
+      if (group) {
+        group.boards.push(board);
+      }
       return { organization: newOrg };
     });
   },
