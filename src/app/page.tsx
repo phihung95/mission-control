@@ -1,245 +1,171 @@
 "use client";
 
+import { useStore } from "@/lib/store";
+import { getTaskStats } from "@/lib/data";
 import { TopBar } from "@/components/layout/TopBar";
-import { mockTools, mockRuns, mockModels } from "@/lib/data";
-import {
-  Plug,
-  Zap,
-  Cpu,
-  Activity,
-  ArrowUpRight,
-  ArrowDownRight,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  Loader2,
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { Avatar } from "@/components/shared/Avatar";
+import { getRelativeTime } from "@/lib/utils";
+import Link from "next/link";
+import { 
+  ListTodo, 
+  Play, 
+  CheckCircle2, 
+  Bot, 
+  ArrowRight,
+  Kanban
 } from "lucide-react";
 
-function StatCard({
-  label,
-  value,
-  change,
-  positive,
-  icon: Icon,
-}: {
-  label: string;
-  value: string;
-  change: string;
-  positive: boolean;
-  icon: React.ElementType;
-}) {
-  return (
-    <div className="bg-[#17171A] rounded-lg p-4 border border-[#1A1A1F]">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-[11px] font-medium text-[#8A8A8E] uppercase tracking-wide">
-          {label}
-        </span>
-        <div className="w-7 h-7 rounded-md bg-[#1F1F24] flex items-center justify-center">
-          <Icon className="w-3.5 h-3.5 text-[#8A8A8E]" />
-        </div>
-      </div>
-      <div className="text-2xl font-semibold text-white mb-1">{value}</div>
-      <div className="flex items-center gap-1">
-        {positive ? (
-          <ArrowUpRight className="w-3.5 h-3.5 text-emerald-400" />
-        ) : (
-          <ArrowDownRight className="w-3.5 h-3.5 text-red-400" />
-        )}
-        <span
-          className={`text-[11px] ${positive ? "text-emerald-400" : "text-red-400"}`}
-        >
-          {change}
-        </span>
-        <span className="text-[11px] text-[#8A8A8E]">vs last week</span>
-      </div>
-    </div>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  if (status === "success")
-    return (
-      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-400/10 text-emerald-400 text-[11px] font-medium">
-        <CheckCircle2 className="w-3 h-3" /> Success
-      </span>
-    );
-  if (status === "failure")
-    return (
-      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-red-400/10 text-red-400 text-[11px] font-medium">
-        <XCircle className="w-3 h-3" /> Failure
-      </span>
-    );
-  if (status === "running")
-    return (
-      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-blue-400/10 text-blue-400 text-[11px] font-medium">
-        <Loader2 className="w-3 h-3 animate-spin" /> Running
-      </span>
-    );
-  return (
-    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[#252529] text-[#8A8A8E] text-[11px] font-medium">
-      <Clock className="w-3 h-3" /> Queued
-    </span>
-  );
-}
-
 export default function OverviewPage() {
-  const totalRuns = mockRuns.length;
-  const successRate = Math.round(
-    (mockRuns.filter((r) => r.status === "success").length / totalRuns) * 100
-  );
-  const activeTools = mockTools.filter((t) => t.status === "active").length;
-  const avgLatency = "2.4s";
-  const recentRuns = mockRuns.slice(0, 5);
-  const recentTools = mockTools.slice(0, 4);
+  const { organization, agents } = useStore();
+  const stats = getTaskStats(organization);
+
+  // Get recent boards
+  const recentBoards = organization.boardGroups.flatMap((g) => 
+    g.boards.map((b) => ({ ...b, groupName: g.name, groupColor: g.color }))
+  ).slice(0, 4);
+
+  // Activity feed - simulate recent task movements
+  const activities = [
+    { id: 1, text: "Integrate Slack webhook moved to In Progress", time: "10m ago", type: "move" },
+    { id: 2, text: "Design system documentation moved to In Review", time: "2h ago", type: "move" },
+    { id: 3, text: "Project kickoff meeting completed", time: "1d ago", type: "done" },
+    { id: 4, text: "Tech stack selection completed", time: "2d ago", type: "done" },
+    { id: 5, text: "Build Gmail Monitor tool added to Backlog", time: "3d ago", type: "create" },
+  ];
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
-      <TopBar title="Overview" />
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-4">
-          <StatCard
-            label="Total Runs"
-            value="12,847"
-            change="+8.2%"
-            positive={true}
-            icon={Zap}
-          />
-          <StatCard
-            label="Success Rate"
-            value={`${successRate}%`}
-            change="-0.3%"
-            positive={false}
-            icon={Activity}
-          />
-          <StatCard
-            label="Active Tools"
-            value={String(activeTools)}
-            change="+2"
-            positive={true}
-            icon={Plug}
-          />
-          <StatCard
-            label="Avg Latency"
-            value={avgLatency}
-            change="-12ms"
-            positive={true}
-            icon={Cpu}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-6">
-          {/* Recent Runs */}
-          <div className="bg-[#17171A] rounded-lg border border-[#1A1A1F]">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#1A1A1F]">
-              <h2 className="text-[13px] font-semibold text-white">Recent Runs</h2>
-              <a
-                href="/runs"
-                className="text-[11px] text-indigo-400 hover:text-indigo-300 transition-colors"
-              >
-                View all →
-              </a>
+    <div className="flex flex-col h-full">
+      <TopBar 
+        title="Overview" 
+        subtitle="Phi Hung's Lab"
+      />
+      
+      <div className="flex-1 overflow-y-auto p-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-4 gap-4 mb-8">
+          <div className="bg-[#17171A] border border-[#2A2A30] rounded-xl p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-lg bg-[#4488FF20] flex items-center justify-center">
+                <ListTodo className="w-4 h-4 text-[#4488FF]" />
+              </div>
             </div>
-            <div className="divide-y divide-[#1A1A1F]">
-              {recentRuns.map((run) => (
-                <div
-                  key={run.id}
-                  className="flex items-center justify-between px-4 py-2.5 hover:bg-[#1F1F24] transition-colors"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <StatusBadge status={run.status} />
-                    <span className="text-[12px] text-[#C4C4C8] truncate">
-                      {run.name}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4 flex-shrink-0">
-                    <span className="text-[11px] text-[#5C5C60]">
-                      {run.startedAt}
-                    </span>
-                    <span className="text-[11px] text-[#5C5C60] w-12 text-right">
-                      {run.duration}s
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <div className="text-2xl font-bold text-white mb-1">{stats.total}</div>
+            <div className="text-sm text-[#8A8A8E]">Total tasks</div>
           </div>
 
-          {/* Active Tools */}
-          <div className="bg-[#17171A] rounded-lg border border-[#1A1A1F]">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#1A1A1F]">
-              <h2 className="text-[13px] font-semibold text-white">Active Tools</h2>
-              <a
-                href="/tools"
-                className="text-[11px] text-indigo-400 hover:text-indigo-300 transition-colors"
-              >
-                Manage →
-              </a>
+          <div className="bg-[#17171A] border border-[#2A2A30] rounded-xl p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-lg bg-[#FF880020] flex items-center justify-center">
+                <Play className="w-4 h-4 text-[#FF8800]" />
+              </div>
             </div>
-            <div className="divide-y divide-[#1A1A1F]">
-              {recentTools.map((tool) => (
-                <div
-                  key={tool.id}
-                  className="flex items-center justify-between px-4 py-2.5 hover:bg-[#1F1F24] transition-colors"
-                >
-                  <div className="min-w-0">
-                    <div className="text-[12px] font-medium text-[#C4C4C8] truncate">
-                      {tool.name}
-                    </div>
-                    <div className="text-[11px] text-[#5C5C60] truncate">
-                      {tool.trigger}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    <span className="text-[11px] text-[#5C5C60]">
-                      {tool.runs.toLocaleString()} runs
-                    </span>
-                    <span
-                      className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                        tool.status === "active"
-                          ? "bg-emerald-400/10 text-emerald-400"
-                          : "bg-[#252529] text-[#5C5C60]"
-                      }`}
-                    >
-                      {tool.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
+            <div className="text-2xl font-bold text-white mb-1">{stats.inProgress}</div>
+            <div className="text-sm text-[#8A8A8E]">In progress</div>
+          </div>
+
+          <div className="bg-[#17171A] border border-[#2A2A30] rounded-xl p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-lg bg-[#22C55E20] flex items-center justify-center">
+                <CheckCircle2 className="w-4 h-4 text-[#22C55E]" />
+              </div>
             </div>
+            <div className="text-2xl font-bold text-white mb-1">{stats.completedThisWeek}</div>
+            <div className="text-sm text-[#8A8A8E]">Completed this week</div>
+          </div>
+
+          <div className="bg-[#17171A] border border-[#2A2A30] rounded-xl p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-lg bg-[#8844FF20] flex items-center justify-center">
+                <Bot className="w-4 h-4 text-[#8844FF]" />
+              </div>
+            </div>
+            <div className="text-2xl font-bold text-white mb-1">{stats.activeAgents}</div>
+            <div className="text-sm text-[#8A8A8E]">Active agents</div>
           </div>
         </div>
 
-        {/* Model status */}
-        <div className="bg-[#17171A] rounded-lg border border-[#1A1A1F]">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#1A1A1F]">
-            <h2 className="text-[13px] font-semibold text-white">Active Models</h2>
-            <a
-              href="/models"
-              className="text-[11px] text-indigo-400 hover:text-indigo-300 transition-colors"
-            >
-              Manage →
-            </a>
+        <div className="grid grid-cols-3 gap-6">
+          {/* Recent Boards */}
+          <div className="col-span-2 bg-[#17171A] border border-[#2A2A30] rounded-xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-white">Recent Boards</h2>
+              <Link 
+                href="/tasks" 
+                className="flex items-center gap-1 text-sm text-[#5E5CE6] hover:text-[#6E6CF0] transition-colors"
+              >
+                View all <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {recentBoards.map((board) => (
+                <Link
+                  key={board.id}
+                  href={`/board/${board.id}`}
+                  className="flex items-center gap-3 p-3 rounded-lg bg-[#0D0D0F] border border-[#2A2A30] hover:border-[#3A3A40] transition-colors group"
+                >
+                  <div 
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: `${board.groupColor}20` }}
+                  >
+                    <Kanban className="w-4 h-4" style={{ color: board.groupColor }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-white truncate">{board.name}</div>
+                    <div className="text-xs text-[#5C5C60]">{board.groupName}</div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-[#5C5C60] group-hover:text-white transition-colors" />
+                </Link>
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-4 divide-x divide-[#1A1A1F]">
-            {mockModels
-              .filter((m) => m.status === "active")
-              .map((model) => (
-                <div key={model.id} className="px-4 py-3">
-                  <div className="text-[12px] font-medium text-white mb-1">
-                    {model.name}
+
+          {/* Active Agents */}
+          <div className="bg-[#17171A] border border-[#2A2A30] rounded-xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-white">Active Agents</h2>
+              <Link 
+                href="/agents" 
+                className="flex items-center gap-1 text-sm text-[#5E5CE6] hover:text-[#6E6CF0] transition-colors"
+              >
+                View all <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+            <div className="space-y-3">
+              {agents.slice(0, 4).map((agent) => (
+                <div 
+                  key={agent.id}
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#0D0D0F] transition-colors"
+                >
+                  <Avatar name={agent.name} size="sm" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-white truncate">{agent.name}</div>
+                    <div className="text-xs text-[#5C5C60]">{agent.model}</div>
                   </div>
-                  <div className="text-[11px] text-[#5C5C60]">{model.provider}</div>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-[10px] text-[#5C5C60]">
-                      {model.latency}
-                    </span>
-                    <span className="text-[10px] text-[#5C5C60]">
-                      {model.costPerM}
-                    </span>
-                  </div>
+                  <StatusBadge status={agent.status} />
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Activity Feed */}
+          <div className="col-span-3 bg-[#17171A] border border-[#2A2A30] rounded-xl p-5">
+            <h2 className="font-semibold text-white mb-4">Recent Activity</h2>
+            <div className="space-y-3">
+              {activities.map((activity) => (
+                <div 
+                  key={activity.id}
+                  className="flex items-center gap-3 py-2 border-b border-[#1A1A1F] last:border-0"
+                >
+                  <div className={`w-2 h-2 rounded-full ${
+                    activity.type === "done" ? "bg-[#22C55E]" :
+                    activity.type === "move" ? "bg-[#4488FF]" : "bg-[#8844FF]"
+                  }`} />
+                  <span className="flex-1 text-sm text-[#8A8A8E]">{activity.text}</span>
+                  <span className="text-xs text-[#5C5C60]">{activity.time}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

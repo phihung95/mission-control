@@ -1,54 +1,125 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 :root {
-  --bg: #0D0D0F;
-  --bg-secondary: #1A1A1F;
-  --bg-tertiary: #1F1F24;
-  --border: #1A1A1F;
-  --text: #FFFFFF;
+  --bg-primary: #0D0D0F;
+  --bg-secondary: #17171A;
+  --bg-tertiary: #1A1A1F;
+  --border-color: #2A2A30;
+  --text-primary: #FFFFFF;
   --text-secondary: #8A8A8E;
+  --text-muted: #5C5C60;
+  --accent: #5E5CE6;
+  --accent-hover: #6E6CF0;
 }
 
 * {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
 body {
-  background-color: var(--bg);
-  color: var(--text);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Scrollbar */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: #2A2A30;
   border-radius: 3px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: #3A3A40;
 }
 
-/* Linear-like table styles */
-.table-row:hover {
-  background-color: #17171A;
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
-/* Pulse animation for running status */
-@keyframes pulse-ring {
-  0% { opacity: 1; }
-  50% { opacity: 0.4; }
-  100% { opacity: 1; }
+/* Button reset */
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
 }
-.animate-pulse-ring {
-  animation: pulse-ring 1.5s ease-in-out infinite;
+
+/* Input reset */
+input, textarea, select {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font: inherit;
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.2s ease-out;
+}
+
+/* Kanban specific */
+.kanban-column {
+  min-height: calc(100vh - 180px);
+}
+
+.dragging {
+  opacity: 0.5;
+}
+
+.drop-target {
+  background-color: rgba(94, 92, 230, 0.1);
+  border: 2px dashed var(--accent);
 }
