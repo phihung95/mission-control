@@ -2,22 +2,23 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useStore } from "@/lib/store";
-import { Send, Bot, ChevronDown } from "lucide-react";
+import { Send, Bot, ChevronDown, Move } from "lucide-react";
 
-interface BoardChatProps {
-  boardId?: string;
-}
-
-export function BoardChat({ boardId: propBoardId }: BoardChatProps) {
+export function BoardChat() {
   const { agents, messages, addMessage, activeBoardId, setActiveBoardId, clearUnread, organization } = useStore();
   const [input, setInput] = useState("");
   const [showBoardSelector, setShowBoardSelector] = useState(false);
-  const currentBoardId = propBoardId ?? activeBoardId ?? "default";
+  const currentBoardId = activeBoardId ?? "default";
   const boardMessages = messages[currentBoardId] ?? [];
   const scrollRef = useRef<HTMLDivElement>(null);
   const leadAgent = agents[0];
 
-  // Get all boards for selector
+  // Drag state
+  const [pos, setPos] = useState({ x: window.innerWidth - 320, y: 0 });
+  const [dragging, setDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+  // All boards for selector
   const allBoards = organization.boardGroups.flatMap((g) =>
     g.boards.map((b) => ({ id: b.id, name: b.name }))
   );
@@ -26,12 +27,29 @@ export function BoardChat({ boardId: propBoardId }: BoardChatProps) {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [boardMessages]);
 
+  // Drag handlers
+  const handleDragStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setDragging(true);
+    setDragOffset({ x: e.clientX, y: e.clientY });
+  };
+
   useEffect(() => {
-    if (currentBoardId && currentBoardId !== activeBoardId) {
-      setActiveBoardId(currentBoardId);
-    }
-    if (currentBoardId) clearUnread(currentBoardId);
-  }, [currentBoardId, activeBoardId, setActiveBoardId, clearUnread]);
+    const onMove = (e: MouseEvent) => {
+      if (!dragging) return;
+      const dx = e.clientX - dragOffset.x;
+      const dy = e.clientY - dragOffset.y;
+      setPos((p) => ({ x: p.x + dx, y: p.y + dy }));
+      setDragOffset({ x: e.clientX, y: e.clientY });
+    };
+    const onUp = () => setDragging(false);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, [dragging, dragOffset]);
 
   const currentBoard = allBoards.find((b) => b.id === currentBoardId);
 
@@ -63,47 +81,54 @@ export function BoardChat({ boardId: propBoardId }: BoardChatProps) {
   };
 
   return (
-    <div className="w-80 bg-[#0D0D0F] border-l border-[#1A1A1F] flex flex-col h-full">
-      {/* Header with board selector */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#1A1A1F]">
-        <div className="relative">
-          <button
-            onClick={() => setShowBoardSelector(!showBoardSelector)}
-            className="flex items-center gap-2 hover:bg-[#1F1F24] rounded-md px-2 py-1 transition-colors"
-          >
-            <div className="w-7 h-7 rounded-full bg-indigo-500/20 flex items-center justify-center">
-              <Bot className="w-4 h-4 text-indigo-400" />
-            </div>
-            <div className="text-xs font-medium text-white max-w-[140px] truncate">
-              {currentBoard?.name ?? "Board Chat"}
-            </div>
-            <ChevronDown className="w-3 h-3 text-[#5C5C60]" />
-          </button>
-
-          {/* Board selector dropdown */}
-          {showBoardSelector && (
-            <div className="absolute top-full left-0 mt-1 w-56 bg-[#17171A] border border-[#1A1A1F] rounded-lg shadow-xl z-10 py-1">
-              {allBoards.map((board) => (
-                <button
-                  key={board.id}
-                  onClick={() => {
-                    setActiveBoardId(board.id);
-                    setShowBoardSelector(false);
-                  }}
-                  className={`w-full text-left px-3 py-2 text-xs hover:bg-[#1F1F24] transition-colors ${
-                    board.id === currentBoardId ? "text-indigo-400" : "text-white"
-                  }`}
-                >
-                  {board.name}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="text-[10px] text-[#5C5C60]">
-            {leadAgent?.status ?? "idle"}
+    <div
+      className="fixed z-50 w-80 bg-[#0D0D0F] border border-[#1A1A1F] rounded-xl shadow-2xl flex flex-col"
+      style={{ left: pos.x, top: pos.y, height: "calc(100vh - 48px)", maxHeight: "calc(100vh - 48px)" }}
+    >
+      {/* Header — draggable */}
+      <div
+        className="flex items-center justify-between px-3 py-2.5 border-b border-[#1A1A1F] cursor-move select-none flex-shrink-0"
+        onMouseDown={handleDragStart}
+      >
+        {/* Board selector + agent info */}
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <Move className="w-3.5 h-3.5 text-[#3A3A40] flex-shrink-0" />
+          <div className="w-7 h-7 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+            <Bot className="w-4 h-4 text-indigo-400" />
           </div>
+          <div className="relative">
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowBoardSelector(!showBoardSelector); }}
+              className="flex items-center gap-1.5 hover:bg-[#1F1F24] rounded-md px-1.5 py-1 transition-colors"
+            >
+              <span className="text-xs font-medium text-white max-w-[100px] truncate">
+                {currentBoard?.name ?? "Board Chat"}
+              </span>
+              <ChevronDown className="w-3 h-3 text-[#5C5C60] flex-shrink-0" />
+            </button>
+
+            {showBoardSelector && (
+              <div className="absolute top-full left-0 mt-1 w-52 bg-[#17171A] border border-[#1A1A1F] rounded-lg shadow-xl z-10 py-1">
+                {allBoards.map((board) => (
+                  <button
+                    key={board.id}
+                    onClick={(e) => { e.stopPropagation(); setActiveBoardId(board.id); setShowBoardSelector(false); }}
+                    className={`w-full text-left px-3 py-2 text-xs hover:bg-[#1F1F24] transition-colors ${
+                      board.id === currentBoardId ? "text-indigo-400" : "text-white"
+                    }`}
+                  >
+                    {board.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Agent status */}
+        <div className="flex items-center gap-1.5 flex-shrink-0 pl-2">
+          <div className={`w-1.5 h-1.5 rounded-full ${leadAgent?.status === "active" ? "bg-emerald-400" : "bg-[#5C5C60]"}`} />
+          <span className="text-[10px] text-[#5C5C60]">{leadAgent?.name ?? "Agent"}</span>
         </div>
       </div>
 
@@ -130,11 +155,9 @@ export function BoardChat({ boardId: propBoardId }: BoardChatProps) {
                 {msg.senderName}
               </div>
               {msg.content}
-              <div
-                className={`text-[10px] mt-1 ${
-                  msg.senderType === "member" ? "text-indigo-200" : "text-[#5C5C60]"
-                }`}
-              >
+              <div className={`text-[10px] mt-1 ${
+                msg.senderType === "member" ? "text-indigo-200" : "text-[#5C5C60]"
+              }`}>
                 {msg.timestamp}
               </div>
             </div>
@@ -144,7 +167,7 @@ export function BoardChat({ boardId: propBoardId }: BoardChatProps) {
       </div>
 
       {/* Input */}
-      <div className="p-3 border-t border-[#1A1A1F]">
+      <div className="p-3 border-t border-[#1A1A1F] flex-shrink-0">
         <div className="flex items-center gap-2">
           <input
             type="text"
