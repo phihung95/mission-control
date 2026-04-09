@@ -58,6 +58,7 @@ export interface Agent {
   status: "active" | "idle" | "busy";
   role: "coder" | "researcher" | "operator" | "reviewer";
   teamId?: string;
+  sessionKey?: string;
 }
 
 // Member

@@ -28,6 +28,10 @@ interface AppState {
   updateAgent: (agentId: string, updates: Partial<Agent>) => void;
   toggleAgentStatus: (agentId: string) => void;
 
+  // API sync
+  fetchAgentsFromAPI: () => Promise<void>;
+  fetchModelsFromAPI: () => Promise<void>;
+
   // Board actions
   addBoard: (board: Board) => void;
 
@@ -184,6 +188,34 @@ export const useStore = create<AppState>((set, get) => ({
           : a
       ),
     }));
+  },
+
+  fetchAgentsFromAPI: async () => {
+    try {
+      const res = await fetch("/api/agents");
+      const data = await res.json();
+      if (data.agents && data.agents.length > 0) {
+        set((state) => ({
+          agents: data.agents,
+        }));
+      }
+    } catch {}
+  },
+
+  fetchModelsFromAPI: async () => {
+    try {
+      const res = await fetch("/api/models");
+      const data = await res.json();
+      if (data.models && data.models.length > 0) {
+        set((state) => ({
+          agents: state.agents.map((a, i) => ({
+            ...a,
+            model: data.models[i]?.name ?? a.model,
+            provider: data.models[i]?.provider === "Ollama" ? "ollama" : "openrouter",
+          })),
+        }));
+      }
+    } catch {}
   },
 
   updateOrganizationName: (name: string) => {

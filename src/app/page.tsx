@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useStore } from "@/lib/store";
 import { getTaskStats } from "@/lib/data";
 import { TopBar } from "@/components/layout/TopBar";
@@ -18,6 +19,12 @@ import {
 } from "lucide-react";
 
 export default function OverviewPage() {
+  const { fetchAgentsFromAPI, fetchModelsFromAPI } = useStore();
+
+  useEffect(() => {
+    fetchAgentsFromAPI();
+    fetchModelsFromAPI();
+  }, []);
   const { organization, agents } = useStore();
   const stats = getTaskStats(organization);
 

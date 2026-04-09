@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useStore } from "@/lib/store";
 import { TopBar } from "@/components/layout/TopBar";
 import { AgentCard } from "@/components/agents/AgentCard";
@@ -9,8 +9,13 @@ import { Agent } from "@/lib/types";
 import { Plus, Bot } from "lucide-react";
 
 export default function AgentsPage() {
-  const { agents, organization, toggleAgentStatus, addAgent } = useStore();
+  const { agents, organization, toggleAgentStatus, addAgent, fetchAgentsFromAPI, fetchModelsFromAPI } = useStore();
   const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    fetchAgentsFromAPI();
+    fetchModelsFromAPI();
+  }, []);
 
   // Calculate task counts per agent
   const getTaskCountForAgent = (agentId: string): number => {

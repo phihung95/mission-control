@@ -53,31 +53,55 @@ export function BoardChat() {
 
   const currentBoard = allBoards.find((b) => b.id === currentBoardId);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
 
-    addMessage(currentBoardId, {
+    const userMsg = {
       id: `msg-${Date.now()}`,
       senderId: "member-1",
       senderName: "Phi Hung",
-      senderType: "member",
+      senderType: "member" as const,
       content: input.trim(),
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    });
+    };
 
+    addMessage(currentBoardId, userMsg);
     setInput("");
 
-    // Simulate agent reply
-    setTimeout(() => {
-      addMessage(currentBoardId, {
-        id: `msg-${Date.now()}`,
-        senderId: leadAgent?.id ?? "agent-1",
-        senderName: leadAgent?.name ?? "Coder-1",
-        senderType: "agent",
-        content: "Got it! I'm on it. I'll analyze the task and report back shortly with my findings.",
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    // Send to real agent via API
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionKey: leadAgent?.sessionKey ?? "agent:main:main",
+          message: input.trim(),
+        }),
       });
-    }, 1500);
+      const data = await res.json();
+
+      if (data.reply) {
+        addMessage(currentBoardId, {
+          id: `msg-${Date.now()}`,
+          senderId: leadAgent?.id ?? "agent-1",
+          senderName: leadAgent?.name ?? "Agent",
+          senderType: "agent",
+          content: data.reply,
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        });
+      } else if (data.ok) {
+        addMessage(currentBoardId, {
+          id: `msg-${Date.now()}`,
+          senderId: leadAgent?.id ?? "agent-1",
+          senderName: leadAgent?.name ?? "Agent",
+          senderType: "agent",
+          content: "Message sent. I'll respond shortly.",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        });
+      }
+    } catch {
+      // API not reachable — silent fallback
+    }
   };
 
   return (
