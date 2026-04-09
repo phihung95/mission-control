@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { Organization, Task, Agent, Member, BoardGroup, Board, FeedEvent, ChatMessage } from "./types";
-import { seedOrganization, seedAgents, seedMembers, feedEvents } from "./data";
+import { seedOrganization, seedMembers, feedEvents } from "./data";
 
 interface AppState {
   organization: Organization;
@@ -55,7 +55,7 @@ interface AppState {
 
 export const useStore = create<AppState>((set, get) => ({
   organization: seedOrganization,
-  agents: seedAgents,
+  agents: [],
   members: seedMembers,
   events: feedEvents,
   messages: {},
