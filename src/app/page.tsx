@@ -2,44 +2,46 @@
 
 import { useEffect } from "react";
 import { useStore } from "@/lib/store";
-import { getTaskStats } from "@/lib/data";
 import { TopBar } from "@/components/layout/TopBar";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Avatar } from "@/components/shared/Avatar";
 import { LiveFeed } from "@/components/shared/LiveFeed";
-import { getRelativeTime } from "@/lib/utils";
 import Link from "next/link";
-import { 
-  ListTodo, 
-  Play, 
-  CheckCircle2, 
-  Bot, 
+import {
+  ListTodo,
+  Play,
+  CheckCircle2,
+  Bot,
   ArrowRight,
-  Kanban
+  Kanban,
 } from "lucide-react";
 
 export default function OverviewPage() {
-  const { fetchAgentsFromAPI, fetchModelsFromAPI } = useStore();
+  const { organization, agents, fetchAgentsFromAPI, fetchModelsFromAPI } = useStore();
 
   useEffect(() => {
     fetchAgentsFromAPI();
     fetchModelsFromAPI();
   }, []);
-  const { organization, agents } = useStore();
-  const stats = getTaskStats(organization);
 
-  // Get recent boards
-  const recentBoards = organization.boardGroups.flatMap((g) => 
+  // Compute stats from live store
+  const allTasks = organization.boardGroups.flatMap((g) =>
+    g.boards.flatMap((b) => b.columns.flatMap((c) => c.tasks))
+  );
+  const totalTasks = allTasks.length;
+  const inProgressTasks = allTasks.filter((t) => t.status === "col-inprogress").length;
+  const doneTasks = allTasks.filter((t) => t.status === "col-done").length;
+  const activeAgents = agents.filter((a) => a.status === "active" || a.status === "busy").length;
+
+  // Recent boards with group info
+  const recentBoards = organization.boardGroups.flatMap((g) =>
     g.boards.map((b) => ({ ...b, groupName: g.name, groupColor: g.color }))
   ).slice(0, 4);
 
   return (
     <div className="flex flex-col h-full">
-      <TopBar 
-        title="Overview" 
-        subtitle="Phi Hung's Lab"
-      />
-      
+      <TopBar title="Overview" subtitle="Phi Hung's Lab" />
+
       <div className="flex-1 overflow-y-auto p-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-4 gap-4 mb-8">
@@ -49,7 +51,7 @@ export default function OverviewPage() {
                 <ListTodo className="w-4 h-4 text-[#4488FF]" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-white mb-1">{stats.total}</div>
+            <div className="text-2xl font-bold text-white mb-1">{totalTasks}</div>
             <div className="text-sm text-[#8A8A8E]">Total tasks</div>
           </div>
 
@@ -59,7 +61,7 @@ export default function OverviewPage() {
                 <Play className="w-4 h-4 text-[#FF8800]" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-white mb-1">{stats.inProgress}</div>
+            <div className="text-2xl font-bold text-white mb-1">{inProgressTasks}</div>
             <div className="text-sm text-[#8A8A8E]">In progress</div>
           </div>
 
@@ -69,8 +71,8 @@ export default function OverviewPage() {
                 <CheckCircle2 className="w-4 h-4 text-[#22C55E]" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-white mb-1">{stats.completedThisWeek}</div>
-            <div className="text-sm text-[#8A8A8E]">Completed this week</div>
+            <div className="text-2xl font-bold text-white mb-1">{doneTasks}</div>
+            <div className="text-sm text-[#8A8A8E]">Completed</div>
           </div>
 
           <div className="bg-[#17171A] border border-[#2A2A30] rounded-xl p-5">
@@ -79,7 +81,7 @@ export default function OverviewPage() {
                 <Bot className="w-4 h-4 text-[#8844FF]" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-white mb-1">{stats.activeAgents}</div>
+            <div className="text-2xl font-bold text-white mb-1">{activeAgents}</div>
             <div className="text-sm text-[#8A8A8E]">Active agents</div>
           </div>
         </div>
@@ -89,8 +91,8 @@ export default function OverviewPage() {
           <div className="col-span-2 bg-[#17171A] border border-[#2A2A30] rounded-xl p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-white">Recent Boards</h2>
-              <Link 
-                href="/tasks" 
+              <Link
+                href="/boards"
                 className="flex items-center gap-1 text-sm text-[#5E5CE6] hover:text-[#6E6CF0] transition-colors"
               >
                 View all <ArrowRight className="w-4 h-4" />
@@ -103,7 +105,7 @@ export default function OverviewPage() {
                   href={`/board/${board.id}`}
                   className="flex items-center gap-3 p-3 rounded-lg bg-[#0D0D0F] border border-[#2A2A30] hover:border-[#3A3A40] transition-colors group"
                 >
-                  <div 
+                  <div
                     className="w-8 h-8 rounded-lg flex items-center justify-center"
                     style={{ backgroundColor: `${board.groupColor}20` }}
                   >
@@ -123,8 +125,8 @@ export default function OverviewPage() {
           <div className="bg-[#17171A] border border-[#2A2A30] rounded-xl p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-white">Active Agents</h2>
-              <Link 
-                href="/agents" 
+              <Link
+                href="/agents"
                 className="flex items-center gap-1 text-sm text-[#5E5CE6] hover:text-[#6E6CF0] transition-colors"
               >
                 View all <ArrowRight className="w-4 h-4" />
@@ -132,7 +134,7 @@ export default function OverviewPage() {
             </div>
             <div className="space-y-3">
               {agents.slice(0, 4).map((agent) => (
-                <div 
+                <div
                   key={agent.id}
                   className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#0D0D0F] transition-colors"
                 >
@@ -144,6 +146,9 @@ export default function OverviewPage() {
                   <StatusBadge status={agent.status} />
                 </div>
               ))}
+              {agents.length === 0 && (
+                <div className="text-sm text-[#5C5C60] text-center py-4">No active agents</div>
+              )}
             </div>
           </div>
 
