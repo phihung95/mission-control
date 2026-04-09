@@ -1,4 +1,4 @@
-import { Organization, Member, Agent, BoardGroup } from "./types";
+import { Organization, Member, Agent, BoardGroup, FeedEvent } from "./types";
 
 // Create members
 export const members: Member[] = [
@@ -268,3 +268,99 @@ export function getTaskStats(org: Organization) {
     activeAgents: agents.filter((a) => a.status === "active" || a.status === "busy").length,
   };
 }
+
+// Feed Events
+export const feedEvents: FeedEvent[] = [
+  {
+    id: "evt-1",
+    type: "task_moved",
+    actor: "Coder-1",
+    actorType: "agent",
+    message: "moved 'Build Gmail Monitor' from Backlog to In Progress",
+    timestamp: "3m ago",
+    boardId: "board-1",
+    taskId: "task-1",
+  },
+  {
+    id: "evt-2",
+    type: "agent_msg",
+    actor: "Researcher-1",
+    actorType: "agent",
+    message: "Found 3 relevant Hacker News articles for 'AI Tools' board",
+    timestamp: "8m ago",
+    boardId: "board-2",
+  },
+  {
+    id: "evt-3",
+    type: "task_completed",
+    actor: "Coder-1",
+    actorType: "agent",
+    message: "completed 'Setup CI/CD pipeline'",
+    timestamp: "12m ago",
+    taskId: "task-2",
+  },
+  {
+    id: "evt-4",
+    type: "approval",
+    actor: "Reviewer-1",
+    actorType: "agent",
+    message: "approved 'Integrate Slack webhook'",
+    timestamp: "15m ago",
+    taskId: "task-3",
+  },
+  {
+    id: "evt-5",
+    type: "task_moved",
+    actor: "Operator-1",
+    actorType: "agent",
+    message: "moved 'Design system documentation' to In Review",
+    timestamp: "25m ago",
+    boardId: "board-1",
+    taskId: "task-4",
+  },
+  {
+    id: "evt-6",
+    type: "agent_status",
+    actor: "Reviewer-1",
+    actorType: "agent",
+    message: "is now active",
+    timestamp: "32m ago",
+  },
+  {
+    id: "evt-7",
+    type: "task_created",
+    actor: "Phi Hung",
+    actorType: "member",
+    message: "created 'Build Gmail Monitor tool'",
+    timestamp: "1h ago",
+    taskId: "task-1",
+  },
+  {
+    id: "evt-8",
+    type: "agent_msg",
+    actor: "Coder-1",
+    actorType: "agent",
+    message: "Finished implementing the webhook handler",
+    timestamp: "1.5h ago",
+    boardId: "board-1",
+  },
+  {
+    id: "evt-9",
+    type: "task_completed",
+    actor: "Coder-1",
+    actorType: "agent",
+    message: "completed 'Tech stack selection'",
+    timestamp: "2h ago",
+    taskId: "task-6",
+  },
+  {
+    id: "evt-10",
+    type: "task_moved",
+    actor: "Operator-1",
+    actorType: "agent",
+    message: "moved 'Integrate Slack webhook' to Done",
+    timestamp: "3h ago",
+    boardId: "board-1",
+    taskId: "task-3",
+  },
+];

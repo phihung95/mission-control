@@ -1,11 +1,13 @@
 import { create } from "zustand";
-import { Organization, Task, Agent, Member, BoardGroup, Board } from "./types";
-import { seedOrganization, agents as seedAgents, members as seedMembers } from "./data";
+import { Organization, Task, Agent, Member, BoardGroup, Board, FeedEvent, ChatMessage } from "./types";
+import { seedOrganization, agents as seedAgents, members as seedMembers, feedEvents } from "./data";
 
 interface AppState {
   organization: Organization;
   agents: Agent[];
   members: Member[];
+  events: FeedEvent[];
+  messages: Record<string, ChatMessage[]>;
   
   // Task actions
   moveTask: (taskId: string, fromColumnId: string, toColumnId: string) => void;
@@ -25,6 +27,12 @@ interface AppState {
   addMember: (member: Member) => void;
   removeMember: (memberId: string) => void;
 
+  // Feed actions
+  addEvent: (event: FeedEvent) => void;
+
+  // Chat actions
+  addMessage: (boardId: string, message: ChatMessage) => void;
+
   // Helpers
   getTaskById: (taskId: string) => Task | undefined;
   getMemberById: (memberId: string) => Member | undefined;
@@ -36,6 +44,8 @@ export const useStore = create<AppState>((set, get) => ({
   organization: seedOrganization,
   agents: seedAgents,
   members: seedMembers,
+  events: feedEvents,
+  messages: {},
 
   moveTask: (taskId: string, fromColumnId: string, toColumnId: string) => {
     set((state) => {
@@ -172,6 +182,21 @@ export const useStore = create<AppState>((set, get) => ({
       organization: {
         ...state.organization,
         members: state.organization.members.filter((m) => m.id !== memberId),
+      },
+    }));
+  },
+
+  addEvent: (event: FeedEvent) => {
+    set((state) => ({
+      events: [event, ...state.events],
+    }));
+  },
+
+  addMessage: (boardId: string, message: ChatMessage) => {
+    set((state) => ({
+      messages: {
+        ...state.messages,
+        [boardId]: [...(state.messages[boardId] ?? []), message],
       },
     }));
   },

@@ -86,3 +86,28 @@ export const priorityLabels: Record<Task["priority"], string> = {
   low: "Low",
   none: "No priority",
 };
+
+// Feed Events
+export type FeedEventType = "task_moved" | "task_created" | "task_completed" | "agent_msg" | "approval" | "agent_status";
+
+export interface FeedEvent {
+  id: string;
+  type: FeedEventType;
+  actor: string;
+  actorType: "agent" | "member";
+  message: string;
+  timestamp: string;
+  boardId?: string;
+  taskId?: string;
+  avatar?: string;
+}
+
+// Chat Messages
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderType: "agent" | "member";
+  content: string;
+  timestamp: string;
+}

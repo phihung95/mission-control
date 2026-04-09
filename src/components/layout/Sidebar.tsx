@@ -9,14 +9,16 @@ import {
   Bot, 
   Users, 
   Settings,
-  Zap
+  Zap,
+  Store
 } from "lucide-react";
 
 const navItems = [
   { href: "/", icon: LayoutDashboard, label: "Overview" },
   { href: "/boards", icon: Kanban, label: "Boards" },
   { href: "/tasks", icon: ListTodo, label: "Tasks" },
-  { href: "/agents", icon: Bot, label: "Models" },
+  { href: "/agents", icon: Bot, label: "Agents" },
+  { href: "/marketplace", icon: Store, label: "Marketplace" },
   { href: "/teams", icon: Users, label: "Teams" },
   { href: "/settings", icon: Settings, label: "Settings" },
 ];

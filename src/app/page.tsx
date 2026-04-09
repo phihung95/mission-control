@@ -5,6 +5,7 @@ import { getTaskStats } from "@/lib/data";
 import { TopBar } from "@/components/layout/TopBar";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Avatar } from "@/components/shared/Avatar";
+import { LiveFeed } from "@/components/shared/LiveFeed";
 import { getRelativeTime } from "@/lib/utils";
 import Link from "next/link";
 import { 
@@ -24,15 +25,6 @@ export default function OverviewPage() {
   const recentBoards = organization.boardGroups.flatMap((g) => 
     g.boards.map((b) => ({ ...b, groupName: g.name, groupColor: g.color }))
   ).slice(0, 4);
-
-  // Activity feed - simulate recent task movements
-  const activities = [
-    { id: 1, text: "Integrate Slack webhook moved to In Progress", time: "10m ago", type: "move" },
-    { id: 2, text: "Design system documentation moved to In Review", time: "2h ago", type: "move" },
-    { id: 3, text: "Project kickoff meeting completed", time: "1d ago", type: "done" },
-    { id: 4, text: "Tech stack selection completed", time: "2d ago", type: "done" },
-    { id: 5, text: "Build Gmail Monitor tool added to Backlog", time: "3d ago", type: "create" },
-  ];
 
   return (
     <div className="flex flex-col h-full">
@@ -148,24 +140,9 @@ export default function OverviewPage() {
             </div>
           </div>
 
-          {/* Activity Feed */}
-          <div className="col-span-3 bg-[#17171A] border border-[#2A2A30] rounded-xl p-5">
-            <h2 className="font-semibold text-white mb-4">Recent Activity</h2>
-            <div className="space-y-3">
-              {activities.map((activity) => (
-                <div 
-                  key={activity.id}
-                  className="flex items-center gap-3 py-2 border-b border-[#1A1A1F] last:border-0"
-                >
-                  <div className={`w-2 h-2 rounded-full ${
-                    activity.type === "done" ? "bg-[#22C55E]" :
-                    activity.type === "move" ? "bg-[#4488FF]" : "bg-[#8844FF]"
-                  }`} />
-                  <span className="flex-1 text-sm text-[#8A8A8E]">{activity.text}</span>
-                  <span className="text-xs text-[#5C5C60]">{activity.time}</span>
-                </div>
-              ))}
-            </div>
+          {/* Live Feed */}
+          <div className="col-span-3 bg-[#17171A] border border-[#2A2A30] rounded-xl overflow-hidden">
+            <LiveFeed />
           </div>
         </div>
       </div>
