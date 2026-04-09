@@ -8,7 +8,7 @@ import { CommandPalette } from "@/components/shared/CommandPalette";
 import { NotificationPanel } from "@/components/shared/NotificationPanel";
 import { KeyboardShortcutsHelp } from "@/components/shared/KeyboardShortcutsHelp";
 import { BoardChat } from "@/components/board/BoardChat";
-import { Bot, Search } from "lucide-react";
+import { Bot } from "lucide-react";
 
 interface GlobalUIProps {
   children: React.ReactNode;
@@ -124,43 +124,30 @@ export function GlobalUI({ children }: GlobalUIProps) {
         onClose={() => setShowShortcutsHelp(false)}
       />
 
-      {/* Persistent Chat FAB */}
-      {currentBoardId && (
-        <button
-          onClick={() => setShowChat(!showChat)}
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-[#5E5CE6] hover:bg-[#6E6CF0] shadow-lg flex items-center justify-center transition-all hover:scale-105"
-          style={{ boxShadow: "0 4px 20px rgba(94, 92, 230, 0.4)" }}
-        >
-          {showChat ? (
+      {/* Persistent Chat FAB — always visible */}
+      <button
+        onClick={() => setShowChat(!showChat)}
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-[#5E5CE6] hover:bg-[#6E6CF0] shadow-lg flex items-center justify-center transition-all hover:scale-105"
+        style={{ boxShadow: "0 4px 20px rgba(94, 92, 230, 0.4)" }}
+        title="Board Chat"
+      >
+        {showChat ? (
+          <Bot className="w-6 h-6 text-white" />
+        ) : (
+          <>
             <Bot className="w-6 h-6 text-white" />
-          ) : (
-            <>
-              <Bot className="w-6 h-6 text-white" />
-              {totalUnread > 0 && (
-                <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
-                  {totalUnread > 9 ? "9+" : totalUnread}
-                </div>
-              )}
-            </>
-          )}
-        </button>
-      )}
+            {totalUnread > 0 && (
+              <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                {totalUnread > 9 ? "9+" : totalUnread}
+              </div>
+            )}
+          </>
+        )}
+      </button>
 
-      {/* Chat Panel (when open) */}
-      {showChat && currentBoardId && (
-        <BoardChat boardId={currentBoardId} />
-      )}
-
-      {/* Chat FAB placeholder when not on a board page - shows search icon */}
-      {!currentBoardId && (
-        <button
-          onClick={() => setShowCommandPalette(true)}
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-[#5E5CE6] hover:bg-[#6E6CF0] shadow-lg flex items-center justify-center transition-all hover:scale-105"
-          style={{ boxShadow: "0 4px 20px rgba(94, 92, 230, 0.4)" }}
-          title="Open command palette (⌘K)"
-        >
-          <Search className="w-6 h-6 text-white" />
-        </button>
+      {/* Chat Panel */}
+      {showChat && (
+        <BoardChat />
       )}
     </>
   );

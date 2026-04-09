@@ -2,18 +2,18 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useStore } from "@/lib/store";
-import { ChatMessage } from "@/lib/types";
-import { Send, Bot, ChevronDown, X } from "lucide-react";
+import { Send, Bot, ChevronDown } from "lucide-react";
 
 interface BoardChatProps {
-  boardId: string;
+  boardId?: string;
 }
 
-export function BoardChat({ boardId }: BoardChatProps) {
+export function BoardChat({ boardId: propBoardId }: BoardChatProps) {
   const { agents, messages, addMessage, activeBoardId, setActiveBoardId, clearUnread, organization } = useStore();
   const [input, setInput] = useState("");
   const [showBoardSelector, setShowBoardSelector] = useState(false);
-  const boardMessages = messages[boardId] ?? [];
+  const currentBoardId = propBoardId ?? activeBoardId ?? "default";
+  const boardMessages = messages[currentBoardId] ?? [];
   const scrollRef = useRef<HTMLDivElement>(null);
   const leadAgent = agents[0];
 
@@ -27,18 +27,18 @@ export function BoardChat({ boardId }: BoardChatProps) {
   }, [boardMessages]);
 
   useEffect(() => {
-    if (boardId !== activeBoardId) {
-      setActiveBoardId(boardId);
+    if (currentBoardId && currentBoardId !== activeBoardId) {
+      setActiveBoardId(currentBoardId);
     }
-    clearUnread(boardId);
-  }, [boardId, activeBoardId, setActiveBoardId, clearUnread]);
+    if (currentBoardId) clearUnread(currentBoardId);
+  }, [currentBoardId, activeBoardId, setActiveBoardId, clearUnread]);
 
-  const currentBoard = allBoards.find((b) => b.id === boardId);
+  const currentBoard = allBoards.find((b) => b.id === currentBoardId);
 
   const handleSend = () => {
     if (!input.trim()) return;
 
-    addMessage(boardId, {
+    addMessage(currentBoardId, {
       id: `msg-${Date.now()}`,
       senderId: "member-1",
       senderName: "Phi Hung",
@@ -51,7 +51,7 @@ export function BoardChat({ boardId }: BoardChatProps) {
 
     // Simulate agent reply
     setTimeout(() => {
-      addMessage(boardId, {
+      addMessage(currentBoardId, {
         id: `msg-${Date.now()}`,
         senderId: leadAgent?.id ?? "agent-1",
         senderName: leadAgent?.name ?? "Coder-1",
@@ -91,7 +91,7 @@ export function BoardChat({ boardId }: BoardChatProps) {
                     setShowBoardSelector(false);
                   }}
                   className={`w-full text-left px-3 py-2 text-xs hover:bg-[#1F1F24] transition-colors ${
-                    board.id === boardId ? "text-indigo-400" : "text-white"
+                    board.id === currentBoardId ? "text-indigo-400" : "text-white"
                   }`}
                 >
                   {board.name}
